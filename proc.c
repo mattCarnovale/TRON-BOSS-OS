@@ -70,6 +70,7 @@ found:
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
 
+  p -> start_ticks = ticks;
   return p;
 }
 
@@ -512,7 +513,11 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
-    cprintf("%d %s %s", p->pid, state, p->name);
+
+    int end_tick = ticks - p->start_ticks;	
+    cprintf("%d %s %s %d.%d", p->pid, state, p->name, end_tick/100,
+			      end_tick % 100);
+
     if(p->state == SLEEPING){
       getcallerpcs((uint*)p->context->ebp+2, pc);
       for(i=0; i<10 && pc[i] != 0; i++)
