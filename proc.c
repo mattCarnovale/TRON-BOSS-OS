@@ -97,6 +97,11 @@ userinit(void)
   p->tf->esp = PGSIZE;
   p->tf->eip = 0;  // beginning of initcode.S
 
+  //Set the uid field to the default for the initial process
+  initproc -> uid = DEFAULT_UID;
+  //Set the gid field to the default for the initial process
+  initproc -> gid = DEFAULT_GID;
+
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
 
@@ -146,6 +151,10 @@ fork(void)
   np->sz = proc->sz;
   np->parent = proc;
   *np->tf = *proc->tf;
+  //copy the uid of the parent process to the child
+  np -> uid = proc -> uid;
+  //copy the gid of the parent process to the child
+  np -> gid = proc -> gid;
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;

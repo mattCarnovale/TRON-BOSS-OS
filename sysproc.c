@@ -105,3 +105,58 @@ sys_date(void)
   cmostime(d);
   return 0;
 }
+
+//implementation of the getuid() system call
+uint
+sys_getuid(void)
+{
+  return proc->uid;
+}
+
+//implementation of the getgid() system call
+uint
+sys_getgid(void)
+{
+  return proc->gid;
+}
+
+//implementation of the getppid() system call
+uint
+sys_getppid(void)
+{
+  if(proc -> parent)	//Check if the parent flag is null
+    return proc -> parent -> pid;	
+  
+  return proc->pid;
+}
+
+//implementation of the setuid() system call
+int
+sys_setuid(void)
+{
+  int new_uid;	
+
+  //This statement uses the argint routine implemented in syscall.c
+  //to grab the nth 32-bit system call argument as an integer.
+  argint(0, &new_uid);	  
+  if((new_uid < 0) || (new_uid > 32767))
+    return -1;
+
+  proc -> uid = new_uid;	     
+  return 0;	
+}
+
+//implementation of the setgid() system call
+int
+sys_setgid(void)
+{
+  int new_gid;	
+
+  argint(0, &new_gid);
+  if((new_gid < 0) || (new_gid > 32767))
+    return -1;
+
+  proc -> gid = new_gid;	     
+  return 0;	
+}
+
