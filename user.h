@@ -24,8 +24,14 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int halt(void);
-//funtion prototype for date()
+//project 1 date()
 int date(struct rtcdate*);
+//project 2 UIDs, GIDs, and PPIDs
+uint getuid(void);
+uint getgid(void);
+uint getppid(void);
+int setuid(uint);
+int setgid(uint);
 
 // ulib.c
 int stat(char*, struct stat*);

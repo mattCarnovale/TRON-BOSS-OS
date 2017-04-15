@@ -67,6 +67,8 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
   uint start_ticks;	       // Start tick for ctrl-p functionality
+  uint uid;		       // User ID
+  uint gid;		       // Group ID 
 };
 
 // Process memory is laid out contiguously, low addresses first:
