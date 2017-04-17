@@ -69,6 +69,8 @@ struct proc {
   uint start_ticks;	       // Start tick for ctrl-p functionality
   uint uid;		       // User ID
   uint gid;		       // Group ID 
+  uint cpu_ticks_total;	       // Total elapsed ticks in CPU
+  uint cpu_ticks_in;	       // Ticks when scheduled
 };
 
 // Process memory is laid out contiguously, low addresses first:

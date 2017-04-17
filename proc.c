@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "uproc.h"
 
 struct {
   struct spinlock lock;
@@ -71,6 +72,8 @@ found:
   p->context->eip = (uint)forkret;
 
   p -> start_ticks = ticks;
+  p -> cpu_ticks_total = 0;
+  p -> cpu_ticks_in = 0;
   return p;
 }
 
@@ -314,6 +317,8 @@ scheduler(void)
       proc = p;
       switchuvm(p);
       p->state = RUNNING;
+      //set the time in cpu value to start when the process enters a cpu
+      p -> cpu_ticks_in = ticks;
       swtch(&cpu->scheduler, proc->context);
       switchkvm();
 
@@ -324,7 +329,7 @@ scheduler(void)
     release(&ptable.lock);
     // if idle, wait for next interrupt
     if (idle) {
-      sti();
+     sti();
       hlt();
     }
   }
@@ -345,6 +350,9 @@ void
 sched(void)
 {
   int intena;
+
+  //update the time in cpu value when the process is removed 
+  proc -> cpu_ticks_total += ticks - proc -> cpu_ticks_in; 
 
   if(!holding(&ptable.lock))
     panic("sched ptable.lock");
@@ -540,4 +548,33 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+int
+copyactiveprocs(uint max, struct uproc * utable)
+{
+  struct proc * p; 
+  int active_processes = 0;
+ 
+  for(p = ptable.proc; p < &ptable.proc[NPROC] && active_processes < max; p++){
+    if(p->state == UNUSED || p -> state == EMBRYO)
+      continue; 
+    //Copy the date from any RUNNABLE, SLEEPING, RUNNING, or ZOMBIE processes
+    utable -> pid  = p -> pid; 
+    utable -> uid  = p -> uid; 
+    utable -> gid  = p -> gid;
+    if (p-> parent)
+      utable -> ppid = p -> parent -> pid;
+    else
+      utable -> ppid = p -> pid;
+    utable -> size = p -> sz;
+    utable -> elapsed_ticks = ticks - p->start_ticks;    
+    utable -> CPU_total_ticks = p -> cpu_ticks_total;
+    strncpy(utable -> name, p -> name, sizeof(p -> name)+ 1);
+    strncpy(utable -> state, states[p -> state], sizeof(p -> state) + 1);
+	//Need to figure out elapsed ticks & CPU ticks
+    ++utable;
+    ++active_processes;	
+  }
+  return active_processes;
 }
