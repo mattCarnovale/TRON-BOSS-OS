@@ -4,7 +4,7 @@
 //as well as the parent process identifier
 #include "types.h"
 #include "user.h" 
-#define TPS 50
+#define TPS 100
 
 static void
 uidtest (uint nval)

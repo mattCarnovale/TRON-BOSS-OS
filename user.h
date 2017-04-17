@@ -1,5 +1,6 @@
 struct stat;
 struct rtcdate;
+struct uproc;
 
 // system calls
 int fork(void);
@@ -32,6 +33,8 @@ uint getgid(void);
 uint getppid(void);
 int setuid(uint);
 int setgid(uint);
+//project 2 ps command
+int getprocs(uint max, struct uproc*);
 
 // ulib.c
 int stat(char*, struct stat*);

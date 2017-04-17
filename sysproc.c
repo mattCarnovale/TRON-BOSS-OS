@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+#include "uproc.h"
 
 int
 sys_fork(void)
@@ -160,3 +161,16 @@ sys_setgid(void)
   return 0;	
 }
 
+//implementation of the getprocs system call
+int
+sys_getprocs(void)
+{
+  int array_size;
+  struct uproc * t;
+
+  if(argint(0, &array_size) < 0 ||  
+     argptr(1, (void*)&t, sizeof(*t)) < 0)  //Similar to the way it's used in sys_date 
+    return -1;      
+
+  return copyactiveprocs(array_size, t);
+}
