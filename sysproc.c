@@ -174,3 +174,18 @@ sys_getprocs(void)
 
   return copyactiveprocs(array_size, t);
 }
+
+//implementation of the time system call
+int
+sys_time(void)
+{
+ int num_of_args; 
+
+  argint(0, &num_of_args);
+
+  if(num_of_args < 0 || num_of_args > MAXARG)
+    return -1;
+  
+
+  return num_of_args;
+}

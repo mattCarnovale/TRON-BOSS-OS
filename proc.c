@@ -522,8 +522,9 @@ procdump(void)
   struct proc *p;
   char *state;
   uint pc[10];
+  uint ppid;
   
-  cprintf("\tPID \tState \tName \tElapsed \tPCs\n");
+  cprintf("\nPID \tNAME \tUID \tGID \tPPID \tELAPSED CPU \tSTATE \tSIZE \tPCs\n");
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->state == UNUSED)
@@ -536,10 +537,26 @@ procdump(void)
     int end_tick = ticks - p->start_ticks;
     int seconds = end_tick/100;
     int partial_seconds = end_tick % 100;
-
-    cprintf("\t%d \t%s \t%s \t%d.", p->pid, state, p->name, seconds);
+    int cpu_seconds = p -> cpu_ticks_total / 100;
+    int cpu_partial_seconds = p -> cpu_ticks_total % 100;
+ 
+   
+    if (p-> parent) {
+      ppid = p -> parent -> pid;
+    } else {
+      ppid = p -> pid;
+    }
+    cprintf("%d \t%s \t%d \t%d \t%d \t%d.", p -> pid, 
+              p -> name, p -> uid, p -> gid, ppid,
+              seconds);
     if(partial_seconds < 10) cprintf("0");
-    cprintf("%d\t", partial_seconds);				
+    cprintf("%d", partial_seconds);
+
+    cprintf("\t%d.", cpu_seconds);
+    if(cpu_partial_seconds < 10) cprintf("0");
+    cprintf("%d", cpu_partial_seconds);
+
+    cprintf("\t%s \t%d", state, p -> sz);  
 
     if(p->state == SLEEPING){
       getcallerpcs((uint*)p->context->ebp+2, pc);
@@ -548,6 +565,7 @@ procdump(void)
     }
     cprintf("\n");
   }
+  cprintf("\n");
 }
 
 int
@@ -563,16 +581,16 @@ copyactiveprocs(uint max, struct uproc * utable)
     utable -> pid  = p -> pid; 
     utable -> uid  = p -> uid; 
     utable -> gid  = p -> gid;
-    if (p-> parent)
+    if (p-> parent){
       utable -> ppid = p -> parent -> pid;
-    else
+    } else {
       utable -> ppid = p -> pid;
+    }
     utable -> size = p -> sz;
     utable -> elapsed_ticks = ticks - p->start_ticks;    
     utable -> CPU_total_ticks = p -> cpu_ticks_total;
     strncpy(utable -> name, p -> name, sizeof(p -> name)+ 1);
     strncpy(utable -> state, states[p -> state], sizeof(p -> state) + 1);
-	//Need to figure out elapsed ticks & CPU ticks
     ++utable;
     ++active_processes;	
   }

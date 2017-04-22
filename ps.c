@@ -7,7 +7,7 @@
 
 
 int
-main(int argc, char *arg[])
+main(int argc, char *argv[])
 {
 
   struct uproc * table;

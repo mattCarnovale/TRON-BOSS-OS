@@ -29,5 +29,5 @@
 #define SYS_setuid    SYS_getppid+1
 #define SYS_setgid    SYS_setuid+1
 #define SYS_getprocs  SYS_setgid+1
-
+#define SYS_time      SYS_getprocs+1
 

@@ -35,6 +35,7 @@ int setuid(uint);
 int setgid(uint);
 //project 2 ps command
 int getprocs(uint max, struct uproc*);
+int time(int);
 
 // ulib.c
 int stat(char*, struct stat*);
