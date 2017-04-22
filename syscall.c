@@ -107,6 +107,7 @@ extern int sys_getppid(void);
 extern int sys_setuid(void);
 extern int sys_setgid(void);
 extern int sys_getprocs(void);
+extern int sys_time(void);
 
 
 static int (*syscalls[])(void) = {
@@ -133,13 +134,14 @@ static int (*syscalls[])(void) = {
 [SYS_close]   sys_close,
 [SYS_halt]    sys_halt,
 //map the symbol name (as used by usys.S) to the function name 
-[SYS_date]    sys_date,
-[SYS_getuid]  sys_getuid,
-[SYS_getgid]  sys_getgid,
+[SYS_date]     sys_date,
+[SYS_getuid]   sys_getuid,
+[SYS_getgid]   sys_getgid,
 [SYS_getppid]  sys_getppid,
-[SYS_setuid]  sys_setuid,
-[SYS_setgid]  sys_setgid,
-[SYS_getprocs]  sys_getprocs,
+[SYS_setuid]   sys_setuid,
+[SYS_setgid]   sys_setgid,
+[SYS_getprocs] sys_getprocs,
+[SYS_time]     sys_time,
 };
 
 // put data structure for printing out system call invocation information here
@@ -174,6 +176,7 @@ static char * syscallnames[] = {
 [SYS_setuid]    "setuid",
 [SYS_setgid]    "setgid",
 [SYS_getprocs]  "getprocs",
+[SYS_time]      "time",
 };
 #endif
 
