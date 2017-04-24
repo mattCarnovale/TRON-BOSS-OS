@@ -21,6 +21,9 @@ main(int argc, char *argv[])
     exit();
   }
 
+  //This print statement is only used to prove the validity of the getprocs routine
+  //printf(1,"The max value passed into the getprocs is: %d\n", max);
+
   active_processes = getprocs(max, table);
 
   if(active_processes < 0){

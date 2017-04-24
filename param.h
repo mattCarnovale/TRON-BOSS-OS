@@ -13,4 +13,4 @@
 // #define FSSIZE       1000  // size of file system in blocks
 #define FSSIZE       2000  // size of file system in blocks  // CS333 requires a larger FS.
 #define DEFAULT_UID  99  // default value for inital process user identification
-#define DEFAULT_GID  99  // default value for inital process group identification
+#define DEFAULT_GID  66  // default value for inital process group identification
