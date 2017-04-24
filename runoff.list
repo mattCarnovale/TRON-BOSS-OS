@@ -83,3 +83,4 @@ date.c
 testuidgid.c
 ps.c
 time.c
+uproc.h
