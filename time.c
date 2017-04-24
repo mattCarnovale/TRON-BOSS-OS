@@ -7,32 +7,18 @@
 int
 main(int argc, char *argv[])
 {
-  int num_of_args, i;
+  int num_of_args;
   int process_id;	
   int start_ticks, end_ticks, total_ticks;
   int seconds, partial_seconds;
 
-  //Test the number of arguments passed in
-  //Returns -1 if error (less than 0 & greater 
-  //than MAXARGS--the maximum number of args
-  //exec can take).
-  num_of_args = time(argc - 1);
+  //Grab the number of args in addition to the time command	
+  num_of_args = argc - 1;
 
   if(num_of_args < 0) {
-    printf(2, "Error: system call to time failed\n");
+    printf(2, "Error: call to time failed\n");
     exit();
   } else if(num_of_args > 0) {
-    //Allocate the memory for each argument as a string
-    //and copy it. This will prepare each argument to be
-    //passed into the execute routine. 
-    char * args[num_of_args];
-    for(i = 0; i < num_of_args; ++i){
-      //Really glad Karla beat this into our heads
-      args[i] = malloc(strlen(argv[i+1] + 1));
-      strcpy(args[i], argv[i+1]);
-    }  
-    args[i]= '\0'; //Set the last element to null or you'll get garbage!
-
     //Capture current ticks   		  
     start_ticks = uptime();
     
@@ -45,8 +31,8 @@ main(int argc, char *argv[])
       printf(2, "fork failed.\n");    
       exit();
     } else if (process_id == 0) {	//child (new) process 
-        exec(args[0], args);		//Hope that the arguments have been
-             			        //formatted correctly	
+        ++argv;				//increment to the next argument
+	exec(argv[0], argv);		
         printf(2,"Error: Exec routine did not exit normally.\n");	
         exit();
     } else {				//parent process
@@ -65,7 +51,7 @@ main(int argc, char *argv[])
   if(num_of_args > 0) { 
     printf(1,"%s ", argv[1]);
   } else { 
-    printf(1,"%s ", argv[0]);
+    printf(1,"___");     
   }
   printf(1,"ran in: %d.", seconds);
   if(partial_seconds < 10) printf(1,"0");
