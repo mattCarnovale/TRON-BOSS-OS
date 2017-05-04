@@ -190,6 +190,9 @@ void
 consoleintr(int (*getc)(void))
 {
   int c, doprocdump = 0;
+  int docfreelist = 0;
+  int docreadylist = 0;
+  int docsleeplist = 0;
 
   acquire(&cons.lock);
   while((c = getc()) >= 0){
@@ -210,6 +213,15 @@ consoleintr(int (*getc)(void))
         consputc(BACKSPACE);
       }
       break;
+    case C('F'):  // Process listing.
+      docfreelist = 1;  
+      break;
+    case C('R'):  // Process listing.
+      docreadylist = 1;  
+      break;
+    case C('S'):  // Process listing.
+      docsleeplist = 1;  
+      break;
     default:
       if(c != 0 && input.e-input.r < INPUT_BUF){
         c = (c == '\r') ? '\n' : c;
@@ -226,6 +238,15 @@ consoleintr(int (*getc)(void))
   release(&cons.lock);
   if(doprocdump) {
     procdump();  // now call procdump() wo. cons.lock held
+  }
+  if(docfreelist) {
+    cfreelist(); 
+  }
+  if(docreadylist) {
+    creadylist(); 
+  }
+  if(docsleeplist) {
+    csleeplist(); 
   }
 }
 

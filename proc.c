@@ -8,9 +8,19 @@
 #include "spinlock.h"
 #include "uproc.h"
 
+struct StateLists {
+  struct proc * ready;
+  struct proc * free;
+  struct proc * sleep;
+  struct proc * zombie;
+  struct proc * running;
+  struct proc * embryo;
+};
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
+  struct StateLists pLists;
 } ptable;
 
 static struct proc *initproc;
@@ -21,6 +31,12 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
+//STATE MANAGEMENT FUNCTIONS 
+static void addtofrontoflist(struct proc ** sLists, struct proc * p);
+static void assertstate(struct proc * p, enum procstate state);
+static int removefromlist(struct proc ** sLists, struct proc * p);
+static int addtoreadylist(struct proc *p);
+  
 void
 pinit(void)
 {
@@ -45,14 +61,44 @@ allocproc(void)
   release(&ptable.lock);
   return 0;
 
+#ifdef CS333_P3P4
+  acquire(&ptable.lock);
+  if(ptable.pLists.free){
+    p = ptable.pLists.free;
+    ptable.pLists.free = ptable.pLists.free -> next;
+    p->next = 0;
+    assert(p, UNUSED);
+    goto found;
+  }
+  release(&ptable.lock);
+  return 0;
+#endif
+
 found:
+//REMOVE
+  if(ptable.pLists.free){
+    p = ptable.pLists.free;
+    ptable.pLists.free = ptable.pLists.free -> next;
+    p->next = 0;
+    assertstate(p, UNUSED);
+  }
+//=============
   p->state = EMBRYO;
+  addtofrontoflist(&ptable.pLists.embryo, p); 
   p->pid = nextpid++;
   release(&ptable.lock);
 
   // Allocate kernel stack.
   if((p->kstack = kalloc()) == 0){
+    acquire(&ptable.lock);
+    int rc = removefromlist(&ptable.pLists.embryo, p);
+    if(rc < 0){
+      panic("Failure removing from embryo list in allocproc.");
+    }
+    assertstate(p, EMBRYO);    
     p->state = UNUSED;
+    addtofrontoflist(&ptable.pLists.free, p);
+    release(&ptable.lock);
     return 0;
   }
   sp = p->kstack + KSTACKSIZE;
@@ -84,7 +130,21 @@ userinit(void)
 {
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
-  
+
+  //Initialize SLEEP, ZOMBIE, RUNNING, EMBRYO lists explicitly
+  ptable.pLists.embryo  = 0;
+  ptable.pLists.ready   = 0;
+  ptable.pLists.sleep   = 0;
+  ptable.pLists.zombie  = 0;
+  ptable.pLists.running = 0;
+
+   //Initialize the FREE List
+//#ifdef CS333_P3P4
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+	addtofrontoflist(&ptable.pLists.free, p);   //Insertion helper function
+  }
+//#endif 
+
   p = allocproc();
   initproc = p;
   if((p->pgdir = setupkvm()) == 0)
@@ -108,7 +168,15 @@ userinit(void)
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
 
+  acquire(&ptable.lock);
+  int rc = removefromlist(&ptable.pLists.embryo, p );
+  if(rc < 0){
+    panic("Failure to remove from embryo list in userinit");
+  } 
+  assertstate(initproc, EMBRYO);
   p->state = RUNNABLE;
+  addtoreadylist(p); 
+  release(&ptable.lock);
 }
 
 // Grow current process's memory by n bytes.
@@ -148,7 +216,15 @@ fork(void)
   if((np->pgdir = copyuvm(proc->pgdir, proc->sz)) == 0){
     kfree(np->kstack);
     np->kstack = 0;
+    acquire(&ptable.lock);
+    int rc = removefromlist(&ptable.pLists.embryo, np );
+    if(rc < 0){
+      panic("Failure to remove from embryo list in userinit");
+    } 
+    assertstate(np, EMBRYO);
     np->state = UNUSED;
+    addtofrontoflist(&ptable.pLists.free, np);
+    release(&ptable.lock);
     return -1;
   }
   np->sz = proc->sz;
@@ -173,7 +249,13 @@ fork(void)
 
   // lock to force the compiler to emit the np->state write last.
   acquire(&ptable.lock);
+  int rc = removefromlist(&ptable.pLists.embryo, np);
+  if(rc < 0){
+    panic("Failure to remove from embryo list in userinit");
+  } 
+  assertstate(np, EMBRYO);
   np->state = RUNNABLE;
+  addtoreadylist(np); 
   release(&ptable.lock);
   
   return pid;
@@ -339,7 +421,48 @@ scheduler(void)
 void
 scheduler(void)
 {
+  struct proc *p;
+  int idle;  // for checking if processor is idle
 
+  for(;;){
+    // Enable interrupts on this processor.
+    sti();
+
+    idle = 1;  // assume idle unless we schedule a process
+    // Loop over process table looking for process to run.
+    acquire(&ptable.lock);
+    if(ptable.pLists.ready){
+      // Switch to chosen process.  It is the process's job
+      // to release ptable.lock and then reacquire it
+      // before jumping back to us.
+      idle = 0;  // not idle this timeslice
+      proc = p;
+      switchuvm(p);
+      p = ptable.pLists.ready;
+      ptable.pLists.ready = ptable.pLists.ready -> next;
+      p -> next = 0;
+      assertstate(p, RUNNABLE);
+      p->state = RUNNING;
+      int rc = addtofrontoflist(&ptable.pLists, p);
+      if(rc < 0){
+        panic("Failed to add to running list in scheduler.");
+      }
+      //set the time in cpu value to start when the process enters a cpu
+      p -> cpu_ticks_in = ticks;
+      swtch(&cpu->scheduler, proc->context);
+      switchkvm();
+
+      // Process is done running for now.
+      // It should have changed its p->state before coming back.
+      proc = 0;
+    }
+    release(&ptable.lock);
+    // if idle, wait for next interrupt
+    if (idle) {
+     sti();
+      hlt();
+    }
+  }
 }
 #endif
 
@@ -370,7 +493,22 @@ sched(void)
 void
 sched(void)
 {
+  int intena;
 
+  //update the time in cpu value when the process is removed 
+  proc -> cpu_ticks_total += ticks - proc -> cpu_ticks_in; 
+
+  if(!holding(&ptable.lock))
+    panic("sched ptable.lock");
+  if(cpu->ncli != 1)
+    panic("sched locks");
+  if(proc->state == RUNNING)
+    panic("sched running");
+  if(readeflags()&FL_IF)
+    panic("sched interruptible");
+  intena = cpu->intena;
+  swtch(&proc->context, cpu->scheduler);
+  cpu->intena = intena;
 }
 #endif
 
@@ -378,10 +516,23 @@ sched(void)
 void
 yield(void)
 {
+#ifndef CS333_P3P4
   acquire(&ptable.lock);  //DOC: yieldlock
   proc->state = RUNNABLE;
   sched();
   release(&ptable.lock);
+#else
+  acquire(&ptable.lock);  //DOC: yieldlock
+  removefromlist(&ptable.pLists.running, proc);
+  assertstate(proc, RUNNING);
+  proc->state = RUNNABLE;
+  int rc = addtoreadylist(proc);
+  if(rc < 0){
+    panic("Failure to add to ready list in yield");
+  }
+  sched();
+  release(&ptable.lock);
+#endif
 }
 
 // A fork child's very first scheduling by scheduler()
@@ -425,7 +576,7 @@ sleep(void *chan, struct spinlock *lk)
     acquire(&ptable.lock);
     if (lk) release(lk);
   }
-
+#ifndef CS333_P3P4
   // Go to sleep.
   proc->chan = chan;
   proc->state = SLEEPING;
@@ -434,6 +585,22 @@ sleep(void *chan, struct spinlock *lk)
   // Tidy up.
   proc->chan = 0;
 
+#else
+  // Go to sleep.
+  proc->chan = chan;
+  int rc = removefromlist(&ptable.pLists.running, proc);
+  if(rc < 0){
+    panic("Failed to remove from running list in sleep ");
+  }
+  assertstate(proc, RUNNING);
+  proc->state = SLEEPING;
+  addtofrontoflist(&ptable.pLists.sleep, proc);
+  sched();
+
+  // Tidy up.
+  proc->chan = 0;
+
+#endif
   // Reacquire original lock.
   if(lk != &ptable.lock){ 
     release(&ptable.lock);
@@ -458,7 +625,41 @@ wakeup1(void *chan)
 static void
 wakeup1(void *chan)
 {
+  struct proc *p;
 
+  if(!ptable.pLists.sleep) {return;}
+
+    while(ptable.pLists.sleep && ptable.pLists.sleep -> chan == chan){
+      p = ptable.pLists.sleep;
+      assertstate(p, SLEEPING);
+      p->state = RUNNABLE;
+      ptable.pLists.sleep = ptable.pLists.sleep -> next;
+      p->next = 0;
+      int rc = addtoreadylist(p);
+      if(rc < 0){
+        panic("ERROR: Failed to add to ready state list in wakeup()");
+      }
+
+  struct proc * current;
+  struct proc * previous;
+
+    current = ptable.pLists.sleep -> next;
+    previous = ptable.pLists.sleep;
+    while(current) {
+      struct proc* temp = current->next;
+      if(current -> chan == chan) {
+        p = current;
+        assertstate(p, SLEEPING);
+        p->state = RUNNABLE;
+        previous -> next = current -> next;
+        p->next = 0;
+        if(addtoreadylist(p) < 0)
+          panic("ERROR: Failed to add to ready state list in wakeup()");
+      } else{
+          previous = current;
+      }
+      current = temp;
+    }
 }
 #endif
 
@@ -595,4 +796,144 @@ copyactiveprocs(uint max, struct uproc * utable)
     ++active_processes;	
   }
   return active_processes;
+}
+
+//GENERAL STATE LIST ROUTINES
+static void 
+addtofrontoflist(struct proc ** sLists, struct proc * p){
+    
+  struct proc * head = *sLists;
+
+  if (!p) {return;}
+  
+  p -> next = head;
+  head = p;
+  *sLists = head;
+  return;
+}
+
+static void
+assertstate(struct proc * p, enum procstate state) {
+
+  if(p->state == state) {return;}
+
+  panic("ERROR: unexpected process state. ");
+
+}
+
+
+static int 
+removefromlist(struct proc ** sLists, struct proc * p){
+  
+  if((!p) || !(*sLists)) {return -1;}  
+ 
+  struct proc * current = *sLists;
+  struct proc * previous; 
+
+  if(current == p){
+    current = current -> next;
+    p -> next = 0;
+    return 0;
+  }
+  current = current -> next;
+  previous = *sLists;
+  while(current){
+    if(current == p){
+      previous -> next = current -> next;
+      p -> next = 0;
+      return 0;
+    } else {
+        previous = current;
+        current = current -> next;
+    } 
+  }
+  return -1;
+}
+
+static int 
+addtoreadylist(struct proc *p){
+
+  if(!p) {return -1;}
+
+  //Case 2: ready list is empty
+  if(!ptable.pLists.ready) {
+    p -> next = ptable.pLists.ready;
+    ptable.pLists.ready = p;
+    return 0;
+  }
+
+  struct proc * current = ptable.pLists.ready;  //for traversal
+
+  while(current -> next) {
+    current = current -> next;
+  }
+  current -> next = p;
+  p -> next = 0;
+  return 0;
+}
+
+
+//NEW CONTROL SEQUENCES
+void
+cfreelist(void){
+
+  int count = 0;
+  struct proc * current = ptable.pLists.free;
+
+  while(current) {
+    ++count;
+    current = current -> next;
+  }
+
+  cprintf("Free List Size: %d processes.\n ", count);
+
+  return;
+}
+
+void
+creadylist(void){
+
+  if(!ptable.pLists.ready){
+    cprintf("READY LIST EMPTY");
+    return; 
+  }
+
+  struct proc * current = ptable.pLists.ready;
+
+  cprintf("READY LIST PROCESSES: ");
+  while(current -> next){
+    cprintf("%d -> ", current -> pid);
+    current = current -> next;
+    if(!current -> next){
+      cprintf("%d \n", current -> pid);
+      return;   
+    }
+  }
+
+
+  return;
+}
+
+void
+csleeplist(void){
+
+  if(!ptable.pLists.sleep){
+    cprintf("SLEEP LIST EMPTY");
+    return; 
+  }
+
+  struct proc * current = ptable.pLists.sleep;
+
+  cprintf("SLEEP LIST PROCESSES: ");
+  while(current -> next){
+    cprintf("%d -> ", current -> pid);
+    current = current -> next;
+    if(!current -> next){
+      cprintf("%d \n", current -> pid);
+      return;   
+    }
+  }
+
+
+  return;
 }
