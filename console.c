@@ -193,6 +193,7 @@ consoleintr(int (*getc)(void))
   int docfreelist = 0;
   int docreadylist = 0;
   int docsleeplist = 0;
+  int doczombielist = 0;
 
   acquire(&cons.lock);
   while((c = getc()) >= 0){
@@ -222,6 +223,9 @@ consoleintr(int (*getc)(void))
     case C('S'):  // Process listing.
       docsleeplist = 1;  
       break;
+    case C('Z'):  // Process listing.
+      doczombielist = 1;  
+      break;
     default:
       if(c != 0 && input.e-input.r < INPUT_BUF){
         c = (c == '\r') ? '\n' : c;
@@ -247,6 +251,9 @@ consoleintr(int (*getc)(void))
   }
   if(docsleeplist) {
     csleeplist(); 
+  }
+  if(doczombielist) {
+    czombielist(); 
   }
 }
 
