@@ -148,11 +148,10 @@ userinit(void)
   ptable.pLists.free    = 0;
 
    //Initialize the FREE List
-//#ifdef CS333_P3P4
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
 	addtofrontoflist(&ptable.pLists.free, p);   //Insertion helper function
   }
-//#endif 
+
   release(&ptable.lock);
   p = allocproc();
   initproc = p;
