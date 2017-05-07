@@ -10,7 +10,7 @@ main(void)
 
   for (int i=0; i<max; i++) {
     sleep(5*TPS);  // pause before each child starts
-    pid = fork();
+    pid  = fork();
     if (pid < 0) {
       printf(2, "fork failed!\n");
       exit();
@@ -34,7 +34,7 @@ main(void)
     } while (1);
   }
 
-  sleep(15*TPS);
+  sleep(10*TPS);
   wait();
   printf(1, "Parent exiting\n");
   exit();

@@ -160,6 +160,7 @@ UPROGS=\
         _time\
         _loopforever\
         _pstest\
+        _undead\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

@@ -888,7 +888,6 @@ procdump(void)
     int cpu_seconds = p -> cpu_ticks_total / 100;
     int cpu_partial_seconds = p -> cpu_ticks_total % 100;
  
-   
     if (p-> parent) {
       ppid = p -> parent -> pid;
     } else {
@@ -1097,6 +1096,11 @@ creadylist(void){
   struct proc * current = ptable.pLists.ready;
 
   cprintf("READY LIST PROCESSES: ");
+  if(current && !current->next){
+      cprintf("%d,\n", current -> pid);
+      release(&ptable.lock);
+      return;   
+  }
   while(current -> next){
     cprintf("%d -> ", current -> pid);
     current = current -> next;
@@ -1123,6 +1127,11 @@ csleeplist(void){
   struct proc * current = ptable.pLists.sleep;
 
   cprintf("SLEEP LIST PROCESSES: ");
+  if(current && !current->next){
+      cprintf("%d,\n", current -> pid);
+      release(&ptable.lock);
+      return;   
+  }
   while(current -> next){
     cprintf("%d -> ", current -> pid);
     current = current -> next;
@@ -1149,6 +1158,11 @@ czombielist(void){
   struct proc * current = ptable.pLists.zombie;
 
   cprintf("ZOMBIE LIST PROCESSES: ");
+  if(current && !current->next){
+      cprintf("%d, PPID: %d\n", current -> pid, current -> parent -> pid);
+      release(&ptable.lock);
+      return;   
+  }
   while(current -> next){
     cprintf("%d, PPID: %d  -> ", current -> pid, current -> parent -> pid);
     current = current -> next;
