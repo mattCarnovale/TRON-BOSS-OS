@@ -159,6 +159,7 @@ UPROGS=\
         _ps\
         _time\
         _loopforever\
+        _pstest\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
