@@ -84,3 +84,6 @@ testuidgid.c
 ps.c
 time.c
 uproc.h
+loopforever.c
+pstest.c
+undead.c

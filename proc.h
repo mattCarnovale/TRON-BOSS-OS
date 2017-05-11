@@ -71,6 +71,7 @@ struct proc {
   uint gid;		       // Group ID 
   uint cpu_ticks_total;	       // Total elapsed ticks in CPU
   uint cpu_ticks_in;	       // Ticks when scheduled
+  struct proc * next;          //pointer to the next process
 };
 
 // Process memory is laid out contiguously, low addresses first:

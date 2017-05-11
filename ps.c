@@ -11,7 +11,7 @@ main(int argc, char *argv[])
 {
 
   struct uproc * table;
-  int max = 16;
+  int max = 64;
   int active_processes;
  
   table = malloc(max * sizeof(struct uproc));
