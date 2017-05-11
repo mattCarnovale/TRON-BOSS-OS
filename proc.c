@@ -73,10 +73,6 @@ allocproc(void)
   acquire(&ptable.lock);
   p = ptable.pLists.free;
   if(p){
-/*    p = ptable.pLists.free;
-    ptable.pLists.free = ptable.pLists.free -> next;
-    p->next = 0;
-*/
     int rc = removefromfront(&ptable.pLists.free, p);
     if(rc < 0){
       panic("Failed to remove from embryo.");
