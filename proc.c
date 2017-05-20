@@ -8,14 +8,10 @@
 #include "spinlock.h"
 #include "uproc.h"
 
-//#define MLFQ
-
-//#ifdef MLFQ
 #define DEFAULT_PRIORITY 0
 #define DEFAULT_BUDGET 300
 #define MAX 5
 #define TICKS_TO_PROMOTE 1100
-//#endif
 
 struct StateLists {
   struct proc * ready[MAX + 1];
@@ -46,9 +42,6 @@ static void addtofrontoflist(struct proc ** sLists, struct proc * p);
 static int removefromfront(struct proc ** sLists, struct proc *p);
 static void assertstate(struct proc * p, enum procstate state);
 static int removefromlist(struct proc ** sLists, struct proc * p);
-//#ifndef MLFQ
-//static int addtoreadylist(struct proc *p);
-//#endif
 static int checkforchildren(struct proc ** sLists, struct proc * parent);
 static void adoptzombiechildren(struct proc ** sLists, struct proc * parent);
 #ifdef DEBUG
@@ -56,7 +49,6 @@ static void checkProcs(char * s);
 #endif
 
 //MLFQ MANAGEMENT FUNCTIONS
-//#ifdef MLFQ
 static int setprocpriority(struct proc ** sLists, int pid, int priority);
 static int setreadyprocpriority(int pid, int priority);
 static int addtoreadyprioritylist(struct proc ** rLists, struct proc *p);
@@ -64,7 +56,6 @@ static void promotiononotherlists(struct proc ** rLists);
 static void promotiononreadylists(int priority_list);
 //Console Control Command Helper Routine
 static void displayreadylists(struct proc ** rLists, int prioritylist);
-//#endif
 
 void
 pinit(void)
@@ -201,10 +192,8 @@ userinit(void)
 
   acquire(&ptable.lock);
 
-//#ifdef MLFQ
   //Initialize the Promotion Time
   ptable.PromoteAtTime = TICKS_TO_PROMOTE;
-//#endif
 
   int rc = removefromlist(&ptable.pLists.embryo, p );
   if(rc < 0){
@@ -213,11 +202,7 @@ userinit(void)
   assertstate(p, EMBRYO);
   p->state = RUNNABLE; 
   p->next = 0;
-//#ifndef MLFQ
-//  ptable.pLists.ready = p;
-//#else
   ptable.pLists.ready[0] = p;
-//#endif
   release(&ptable.lock);
 }
 
@@ -297,14 +282,10 @@ fork(void)
   } 
   assertstate(np, EMBRYO);
   np->state = RUNNABLE;
-//#ifndef MLFQ 
-//  addtoreadylist(np);
-//#else
   rc = addtoreadyprioritylist(&ptable.pLists.ready[np->priority], np);
   if(rc < 0){
     panic("Failure to add to ready list in fork");
   }
-//#endif 
   release(&ptable.lock);
   
   return pid;
@@ -586,50 +567,6 @@ scheduler(void)
     idle = 1;  // assume idle unless we schedule a process
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-/*
-#ifdef MLFQ
-    //Check to see if its time to adjust priorities
-    if(ptable.PromoteAtTime == ticks){
-       //Promote the processes on other lists	
-       promotiononotherlists(&ptable.pLists.sleep);
-       promotiononotherlists(&ptable.pLists.running);
-       if(MAX > 0){
-         for(int i = 0; i < MAX; ++i){
-           promotiononreadylists(i);
-         } 
-       }
-       //Update the promotion timer 
-       ptable.PromoteAtTime = ticks + TICKS_TO_PROMOTE;       
-    }
-#endif
-*/
-/*#ifndef MLFQ
-    p = ptable.pLists.ready;
-    if(p){
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      idle = 0;  // not idle this timeslice
-      proc = p;
-      switchuvm(p);
-      int rc = removefromfront(&ptable.pLists.ready, p);
-      if(rc < 0){
-        panic("Failed to remove from ready list in scheduler.");
-      }    
-      assertstate(p, RUNNABLE);
-      p->state = RUNNING;
-      addtofrontoflist(&ptable.pLists.running, p);
-      //set the time in cpu value to start when the process enters a cpu
-      p -> cpu_ticks_in = ticks;
-      swtch(&cpu->scheduler, proc->context);
-      switchkvm();
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      proc = 0;
-    }
-
-#else*/
     int i;
     for(i = 0; i < MAX+1; ++i){
       //Check to see if its time to adjust priorities
@@ -746,9 +683,6 @@ yield(void)
   removefromlist(&ptable.pLists.running, proc);
   assertstate(proc, RUNNING);
   proc->state = RUNNABLE;
-//#ifndef MLFQ
-//  int rc = addtoreadylist(proc);
-//#else
   //Update Budget & enforce demotion
   proc->budget = proc->budget - (ticks - proc->cpu_ticks_in);
   if(proc->budget <= 0){
@@ -760,7 +694,6 @@ yield(void)
     } 
   }
   int rc = addtoreadyprioritylist(&ptable.pLists.ready[proc->priority], proc);
-//#endif
   if(rc < 0){
     panic("Failure to add to ready list in yield");
   }
@@ -878,11 +811,7 @@ wakeup1(void *chan)
         if(removefromlist(&ptable.pLists.sleep, p) == 0){
           assertstate(p, SLEEPING);
           p -> state = RUNNABLE;
-//#ifndef MLFQ
-//          int rc = addtoreadylist(p);
-//#else
           int rc = addtoreadyprioritylist(&ptable.pLists.ready[p->priority], p);
-//#endif
           if(rc < 0){
             panic("Failed to add to ready list in wakeup1.");
           }
@@ -943,14 +872,10 @@ kill(int pid)
        assertstate(p, SLEEPING);
        p->state = RUNNABLE;
        p->killed = 1;
-//#ifndef MLFQ
-//       addtoreadylist(p);
-//#else
        rc = addtoreadyprioritylist(&ptable.pLists.ready[p->priority], p);
        if(rc < 0){
 	  panic("Failure to add to ready list in yield");
        }
-//#endif
        release(&ptable.lock);
        return 0;
     }
@@ -965,17 +890,6 @@ kill(int pid)
     }
     p = p->next; 
   }
-/*#ifndef MLFQ
-  p = ptable.pLists.ready;
-  while(p){
-    if(p->pid == pid){
-       p->killed = 1;
-       release(&ptable.lock);
-       return 0;
-    }
-    p = p->next;
-  }
-#else*/
   for(int i = 0; i < MAX+1; ++i){
     p = ptable.pLists.ready[i];
     while(p){
@@ -987,7 +901,6 @@ kill(int pid)
       p = p->next;
     }
   }
-//#endif
   p = ptable.pLists.running;
   while(p){
     if(p->pid == pid){
@@ -1161,32 +1074,6 @@ removefromlist(struct proc ** sLists, struct proc * p){
   return -1;
 }
 
-/*#ifndef MLFQ
-//P3 Add to ready list routine 
-//only one list existed
-static int 
-addtoreadylist(struct proc *p){
-
-  if(!p) {return -1;}
-
-  //Case 2: ready list is empty
-  if(!ptable.pLists.ready) {
-    p -> next = 0;
-    ptable.pLists.ready = p;
-    return 0;
-  }
-
-  struct proc * current = ptable.pLists.ready[0];  //for traversal
-
-  while(current -> next) {
-    current = current -> next;
-  }
-  current -> next = p;
-  p -> next = 0;
-  return 0;
-}
-#endif*/
-
 static int
 checkforchildren(struct proc ** sLists, struct proc * parent) {
 
@@ -1241,40 +1128,6 @@ cfreelist(void){
   return;
 }
 
-/*#ifndef MLFQ
-//P3 Ready list Console Control Command
-void
-creadylist(void){
-
-  acquire(&ptable.lock);
-
-  if(!ptable.pLists.ready[0]){
-    cprintf("READY LIST EMPTY\n");
-    release(&ptable.lock);
-    return; 
-  }
-
-  struct proc * current = ptable.pLists.ready[0];
-
-  cprintf("READY LIST PROCESSES: ");
-  if(current && !current->next){
-      cprintf("%d,\n", current -> pid);
-      release(&ptable.lock);
-      return;   
-  }
-  while(current -> next){
-    cprintf("%d -> ", current -> pid);
-    current = current -> next;
-    if(!current -> next){
-      cprintf("%d \n", current -> pid);
-      release(&ptable.lock);
-      return;   
-    }
-  }
-  release(&ptable.lock);
-  return;
-}
-#else*/
 //P4 Ready list Console Control Command
 void
 creadylist(void){
@@ -1320,7 +1173,6 @@ displayreadylists(struct proc ** rLists, int prioritylist){
   }
   return;
 }
-//#endif
 
 void
 csleeplist(void){
@@ -1445,7 +1297,6 @@ checkProcs(char *s)
 }
 #endif
 
-//#ifdef MLFQ
 //PROJECT 4 MLFQ ROUTINES
 int
 setpriority(int pid, int priority){
@@ -1621,4 +1472,3 @@ promotiononreadylists(int priority_list){
 
  return; 
 }
-//#endif
