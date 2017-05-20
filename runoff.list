@@ -87,3 +87,4 @@ uproc.h
 loopforever.c
 pstest.c
 undead.c
+setpriority.c
