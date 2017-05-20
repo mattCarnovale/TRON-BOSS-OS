@@ -8,14 +8,14 @@
 #include "spinlock.h"
 #include "uproc.h"
 
-#define MLFQ
+//#define MLFQ
 
-#ifdef MLFQ
+//#ifdef MLFQ
 #define DEFAULT_PRIORITY 0
-#define DEFAULT_BUDGET 2147483647
+#define DEFAULT_BUDGET 300
 #define MAX 5
-#define TICKS_TO_PROMOTE 2147483647
-#endif
+#define TICKS_TO_PROMOTE 1100
+//#endif
 
 struct StateLists {
   struct proc * ready[MAX + 1];
@@ -46,9 +46,9 @@ static void addtofrontoflist(struct proc ** sLists, struct proc * p);
 static int removefromfront(struct proc ** sLists, struct proc *p);
 static void assertstate(struct proc * p, enum procstate state);
 static int removefromlist(struct proc ** sLists, struct proc * p);
-#ifndef MLFQ
-static int addtoreadylist(struct proc *p);
-#endif
+//#ifndef MLFQ
+//static int addtoreadylist(struct proc *p);
+//#endif
 static int checkforchildren(struct proc ** sLists, struct proc * parent);
 static void adoptzombiechildren(struct proc ** sLists, struct proc * parent);
 #ifdef DEBUG
@@ -56,7 +56,7 @@ static void checkProcs(char * s);
 #endif
 
 //MLFQ MANAGEMENT FUNCTIONS
-#ifdef MLFQ
+//#ifdef MLFQ
 static int setprocpriority(struct proc ** sLists, int pid, int priority);
 static int setreadyprocpriority(int pid, int priority);
 static int addtoreadyprioritylist(struct proc ** rLists, struct proc *p);
@@ -64,7 +64,7 @@ static void promotiononotherlists(struct proc ** rLists);
 static void promotiononreadylists(int priority_list);
 //Console Control Command Helper Routine
 static void displayreadylists(struct proc ** rLists, int prioritylist);
-#endif
+//#endif
 
 void
 pinit(void)
@@ -201,10 +201,10 @@ userinit(void)
 
   acquire(&ptable.lock);
 
-#ifdef MLFQ
+//#ifdef MLFQ
   //Initialize the Promotion Time
   ptable.PromoteAtTime = TICKS_TO_PROMOTE;
-#endif
+//#endif
 
   int rc = removefromlist(&ptable.pLists.embryo, p );
   if(rc < 0){
@@ -213,11 +213,11 @@ userinit(void)
   assertstate(p, EMBRYO);
   p->state = RUNNABLE; 
   p->next = 0;
-#ifndef MLFQ
-  ptable.pLists.ready = p;
-#else
+//#ifndef MLFQ
+//  ptable.pLists.ready = p;
+//#else
   ptable.pLists.ready[0] = p;
-#endif
+//#endif
   release(&ptable.lock);
 }
 
@@ -297,14 +297,14 @@ fork(void)
   } 
   assertstate(np, EMBRYO);
   np->state = RUNNABLE;
-#ifndef MLFQ 
-  addtoreadylist(np);
-#else
+//#ifndef MLFQ 
+//  addtoreadylist(np);
+//#else
   rc = addtoreadyprioritylist(&ptable.pLists.ready[np->priority], np);
   if(rc < 0){
     panic("Failure to add to ready list in fork");
   }
-#endif 
+//#endif 
   release(&ptable.lock);
   
   return pid;
@@ -603,7 +603,7 @@ scheduler(void)
     }
 #endif
 */
-#ifndef MLFQ
+/*#ifndef MLFQ
     p = ptable.pLists.ready;
     if(p){
       // Switch to chosen process.  It is the process's job
@@ -629,7 +629,7 @@ scheduler(void)
       proc = 0;
     }
 
-#else
+#else*/
     int i;
     for(i = 0; i < MAX+1; ++i){
       //Check to see if its time to adjust priorities
@@ -674,7 +674,7 @@ scheduler(void)
         proc = 0;
       }
     }
-#endif
+//#endif
 
     release(&ptable.lock);
     // if idle, wait for next interrupt
@@ -746,9 +746,9 @@ yield(void)
   removefromlist(&ptable.pLists.running, proc);
   assertstate(proc, RUNNING);
   proc->state = RUNNABLE;
-#ifndef MLFQ
-  int rc = addtoreadylist(proc);
-#else
+//#ifndef MLFQ
+//  int rc = addtoreadylist(proc);
+//#else
   //Update Budget & enforce demotion
   proc->budget = proc->budget - (ticks - proc->cpu_ticks_in);
   if(proc->budget <= 0){
@@ -760,7 +760,7 @@ yield(void)
     } 
   }
   int rc = addtoreadyprioritylist(&ptable.pLists.ready[proc->priority], proc);
-#endif
+//#endif
   if(rc < 0){
     panic("Failure to add to ready list in yield");
   }
@@ -878,11 +878,11 @@ wakeup1(void *chan)
         if(removefromlist(&ptable.pLists.sleep, p) == 0){
           assertstate(p, SLEEPING);
           p -> state = RUNNABLE;
-#ifndef MLFQ
-          int rc = addtoreadylist(p);
-#else
+//#ifndef MLFQ
+//          int rc = addtoreadylist(p);
+//#else
           int rc = addtoreadyprioritylist(&ptable.pLists.ready[p->priority], p);
-#endif
+//#endif
           if(rc < 0){
             panic("Failed to add to ready list in wakeup1.");
           }
@@ -943,14 +943,14 @@ kill(int pid)
        assertstate(p, SLEEPING);
        p->state = RUNNABLE;
        p->killed = 1;
-#ifndef MLFQ
-       addtoreadylist(p);
-#else
+//#ifndef MLFQ
+//       addtoreadylist(p);
+//#else
        rc = addtoreadyprioritylist(&ptable.pLists.ready[p->priority], p);
        if(rc < 0){
 	  panic("Failure to add to ready list in yield");
        }
-#endif
+//#endif
        release(&ptable.lock);
        return 0;
     }
@@ -965,7 +965,7 @@ kill(int pid)
     }
     p = p->next; 
   }
-#ifndef MLFQ
+/*#ifndef MLFQ
   p = ptable.pLists.ready;
   while(p){
     if(p->pid == pid){
@@ -975,7 +975,7 @@ kill(int pid)
     }
     p = p->next;
   }
-#else
+#else*/
   for(int i = 0; i < MAX+1; ++i){
     p = ptable.pLists.ready[i];
     while(p){
@@ -987,7 +987,7 @@ kill(int pid)
       p = p->next;
     }
   }
-#endif
+//#endif
   p = ptable.pLists.running;
   while(p){
     if(p->pid == pid){
@@ -1161,7 +1161,7 @@ removefromlist(struct proc ** sLists, struct proc * p){
   return -1;
 }
 
-#ifndef MLFQ
+/*#ifndef MLFQ
 //P3 Add to ready list routine 
 //only one list existed
 static int 
@@ -1185,7 +1185,7 @@ addtoreadylist(struct proc *p){
   p -> next = 0;
   return 0;
 }
-#endif
+#endif*/
 
 static int
 checkforchildren(struct proc ** sLists, struct proc * parent) {
@@ -1241,7 +1241,7 @@ cfreelist(void){
   return;
 }
 
-#ifndef MLFQ
+/*#ifndef MLFQ
 //P3 Ready list Console Control Command
 void
 creadylist(void){
@@ -1274,7 +1274,7 @@ creadylist(void){
   release(&ptable.lock);
   return;
 }
-#else
+#else*/
 //P4 Ready list Console Control Command
 void
 creadylist(void){
@@ -1320,7 +1320,7 @@ displayreadylists(struct proc ** rLists, int prioritylist){
   }
   return;
 }
-#endif
+//#endif
 
 void
 csleeplist(void){
@@ -1445,7 +1445,7 @@ checkProcs(char *s)
 }
 #endif
 
-#ifdef MLFQ
+//#ifdef MLFQ
 //PROJECT 4 MLFQ ROUTINES
 int
 setpriority(int pid, int priority){
@@ -1621,4 +1621,4 @@ promotiononreadylists(int priority_list){
 
  return; 
 }
-#endif
+//#endif
