@@ -10,7 +10,7 @@
 
 #define DEFAULT_PRIORITY 0
 #define DEFAULT_BUDGET 300
-#define MAX 5
+#define MAX 5 
 #define TICKS_TO_PROMOTE 1100
 
 struct StateLists {
