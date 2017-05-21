@@ -368,9 +368,11 @@ exit(void)
   if(p){
     adoptzombiechildren(&ptable.pLists.embryo, proc); 
   } 
-  p = ptable.pLists.ready[0];
-  if(p){
-    adoptzombiechildren(&ptable.pLists.ready[0], proc); 
+  for(int i = 0; i < MAX + 1; ++i){
+    p = ptable.pLists.ready[i];
+    if(p){
+      adoptzombiechildren(&ptable.pLists.ready[i], proc); 
+    }
   } 
   p = ptable.pLists.sleep;
   if(p){
@@ -459,11 +461,16 @@ wait(void)
     havekids = 0;
 
    if((checkforchildren(&ptable.pLists.embryo, proc) == 0)  ||
-      (checkforchildren(&ptable.pLists.ready[0], proc) == 0)   ||
       (checkforchildren(&ptable.pLists.running, proc) == 0) ||
       (checkforchildren(&ptable.pLists.sleep, proc) == 0))  {
       havekids = 1;
-      }
+   }
+   for(int i = 0; i < MAX + 1; ++i){
+     if(checkforchildren(&ptable.pLists.ready[i], proc) == 0){
+       havekids = 1;
+     }
+   }
+   
 
     p = ptable.pLists.zombie;
     while(p){
