@@ -10,6 +10,7 @@ struct uproc {
   char state[STRMAX];
   uint size;
   char name[STRMAX];
+  uint priority;
 }; 
 
 int copyactiveprocs(uint max, struct uproc*); //Helper function for getprocs routine.

@@ -32,7 +32,7 @@ main(int argc, char *argv[])
   } 
 
 
-  printf(1, "\tPID \tNAME \tUID \tGID \tPPID \tELAPSED CPU \tSTATE \tSIZE\n");
+  printf(1, "\tPID \tNAME \tUID \tGID \tPPID \tPRIO \tELAPSED CPU \tSTATE \tSIZE\n");
 
   for(int i = 0; i < active_processes; ++i){
     //format the elapsed_ticks into seconds and partial seconds for elapsed time
@@ -42,9 +42,9 @@ main(int argc, char *argv[])
     int cpu_seconds = table[i].CPU_total_ticks / 100;
     int cpu_partial_seconds = table[i].CPU_total_ticks % 100;
  
-    printf(1, "\t%d \t%s \t%d \t%d \t%d \t%d.", table[i].pid, 
+    printf(1, "\t%d \t%s \t%d \t%d \t%d \t%d \t%d.", table[i].pid, 
               table[i].name, table[i].uid, table[i].gid, table[i].ppid,
-              seconds);
+              table[i].priority, seconds);
     if(partial_seconds < 10) printf(1,"0");
     printf(1,"%d", partial_seconds);
 

@@ -28,7 +28,7 @@ main(void)
 
   pid = fork();
   if (pid == 0) {
-    sleep(20);
+    sleep(15);
     do {
       x = x+1;
     } while (1);

@@ -161,6 +161,7 @@ UPROGS=\
         _loopforever\
         _pstest\
         _undead\
+        _setpriority\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

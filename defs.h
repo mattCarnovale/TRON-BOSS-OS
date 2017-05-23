@@ -122,6 +122,7 @@ void            cfreelist(void);
 void            creadylist(void);
 void            csleeplist(void);
 void            czombielist(void);
+int setpriority(int pid, int priority);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
