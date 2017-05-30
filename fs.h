@@ -29,7 +29,7 @@ struct superblock {
 #define MAXFILE (NDIRECT + NINDIRECT)
 
 #ifdef CS333_P5
-union stat_mode_t{
+union mode_t{
   struct {
     uint o_x : 1;
     uint o_w : 1;
@@ -56,7 +56,7 @@ struct dinode {
 #ifdef CS333_P5
   ushort uid;           // Owner ID
   ushort gid;           // Group ID
-  union stat_mode_t mode; //protection/mode bits 
+  union mode_t mode;    //protection/mode bits 
 #endif
   uint size;            // Size of file (bytes)
   uint addrs[NDIRECT+1];   // Data block addresses

@@ -23,7 +23,7 @@ struct inode {
 #ifdef CS333_P5
   ushort uid;           // Owner ID
   ushort gid;           // Group ID
-  union stat_mode_t mode; //protection/mode bits 
+  union mode_t mode;    //protection/mode bits 
 #endif
   uint size;
   uint addrs[NDIRECT+1];
