@@ -37,6 +37,10 @@ int setgid(uint);
 int getprocs(uint max, struct uproc*);
 //project 4 setpriority command
 int setpriority(int pid, int priority);
+//project 5 chmod, chown, chgrp
+int chmod(char*pathname, int mode);
+int chown(char*pathname, int owner);
+int chgrp(char*pathname, int group);
 
 // ulib.c
 int stat(char*, struct stat*);

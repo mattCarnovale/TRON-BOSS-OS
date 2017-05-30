@@ -163,6 +163,9 @@ UPROGS=\
         _pstest\
         _undead\
         _setpriority\
+        _chmod\
+        _chown\
+        _chgrp\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
