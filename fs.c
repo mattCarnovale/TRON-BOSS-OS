@@ -426,6 +426,11 @@ stati(struct inode *ip, struct stat *st)
   st->ino = ip->inum;
   st->type = ip->type;
   st->nlink = ip->nlink;
+#ifdef CS333_P5
+  st->uid = ip -> uid;
+  st->gid = ip -> gid;
+//st->mode = ip -> mode; 
+#endif
   st->size = ip->size;
 }
 

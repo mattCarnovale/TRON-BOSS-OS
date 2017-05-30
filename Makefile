@@ -73,6 +73,7 @@ CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 &
 # CFLAGS += -DPRINT_SYSCALLS       # CS333 to print syscall traces **CONFIRMED**
 # CFLAGS += -DUSE_BUILTINS         # CS333 to turn on shell built-ins
 CFLAGS += -DCS333_P3P4             # CS333 to use lists for state management  
+CFLAGS += -DCS333_P5               # CS333 to use File Protection System
 # CFLAGS += -DDEBUG                # CS333 to Debug Issus with P3 
 ASFLAGS = -m32 -gdwarf-2 -Wa,-divide
 # FreeBSD ld wants ``elf_i386_fbsd''
@@ -129,7 +130,7 @@ _forktest: forktest.o $(ULIB)
 	$(OBJDUMP) -S _forktest > forktest.asm
 
 mkfs: mkfs.c fs.h
-	gcc -Werror -Wall -o mkfs mkfs.c
+	gcc -Werror -Wall -DCS333_P5 -o mkfs mkfs.c
 
 # Prevent deletion of intermediate files, e.g. cat.o, after first build, so
 # that disk image changes after first build are persistent until clean.  More

@@ -12,5 +12,6 @@
 #define NBUF         (MAXOPBLOCKS*3)  // size of disk block cache
 // #define FSSIZE       1000  // size of file system in blocks
 #define FSSIZE       2000  // size of file system in blocks  // CS333 requires a larger FS.
-#define DEFAULT_UID  99  // default value for inital process user identification
-#define DEFAULT_GID  66  // default value for inital process group identification
+#define DEFAULT_UID  0  // default value for inital process user identification & files created by mkfs
+#define DEFAULT_GID  0  // default value for inital process group identification & files created by mkfs
+#define DEFAULT_MODE 00755
