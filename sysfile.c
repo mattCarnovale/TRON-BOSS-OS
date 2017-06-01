@@ -452,12 +452,21 @@ sys_chmod(char * pathname, int mode)
 int 
 sys_chown(char * pathname, int owner) 
 {
-  return 0;
+  if(argptr(0, (void*)&pathname, sizeof(*pathname)) < 0 || 
+     argint(1, &owner) < 0)
+     return -1; 
+
+  return chown(pathname, owner);
 }
 
 int
 sys_chgrp(char * pathname, int group)
 {
+  if(argptr(0, (void*)&pathname, sizeof(*pathname)) < 0 || 
+     argint(1, &group) < 0)
+     return -1; 
+
+  return chgrp(pathname, group);
   return 0;
 }
 #endif

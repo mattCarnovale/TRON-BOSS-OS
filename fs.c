@@ -430,6 +430,16 @@ stati(struct inode *ip, struct stat *st)
   st->uid = ip -> uid;
   st->gid = ip -> gid;
   st->mode.asInt = ip -> mode.asInt; 
+  st->mode.flags.o_x = ip -> mode.flags.o_x;
+  st->mode.flags.o_w = ip -> mode.flags.o_w;
+  st->mode.flags.o_r = ip -> mode.flags.o_r;
+  st->mode.flags.g_x = ip -> mode.flags.g_x;
+  st->mode.flags.g_w = ip -> mode.flags.g_w;
+  st->mode.flags.g_r = ip -> mode.flags.g_r;
+  st->mode.flags.u_x = ip -> mode.flags.u_x;
+  st->mode.flags.u_w = ip -> mode.flags.u_w;
+  st->mode.flags.u_r = ip -> mode.flags.u_r;
+  st->mode.flags.setuid    = ip -> mode.flags.setuid; 
 #endif
   st->size = ip->size;
 }
@@ -654,3 +664,32 @@ nameiparent(char *path, char *name)
 {
   return namex(path, 1, name);
 }
+
+#ifdef CS333_P5
+//The chown() routine sets the user UID for the target specified by pathname.
+int chown(char * pathname, int owner){
+
+  struct inode * temp;
+  begin_op();
+  temp = namei(pathname);
+  if(temp){
+    temp->uid = owner;
+    return 0;
+  }
+  end_op();
+  return -1;
+}
+//The chgrp() routine sets the user GID for the target specified by pathname.
+int chgrp(char * pathname, int group){
+
+  struct inode * temp;
+  begin_op();
+  temp = namei(pathname);
+  if(temp){
+    temp->gid = group;
+    return 0;
+  }
+  end_op();
+  return -1;
+}
+#endif
