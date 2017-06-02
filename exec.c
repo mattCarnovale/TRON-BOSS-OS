@@ -35,13 +35,13 @@ exec(char *path, char **argv)
   //Check against user permissions
   if(st->uid == proc->uid){
     if(!st->mode.flags.u_x)
-      return -1;
+      goto bad;
   } else if(st->gid == proc->gid){       //Check against group permissions
     if(!st->mode.flags.g_x)
-      return -1; 
+      goto bad; 
   } else {                               //Default / Other
       if(!st->mode.flags.o_x)
-        return -1;
+        goto bad;
   }
 #endif
 

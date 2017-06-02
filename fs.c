@@ -672,17 +672,14 @@ chmod(char * pathname, int mode){
   struct inode * temp;
   begin_op();
   temp = namei(pathname);
-  ilock(temp);
   if(temp){
+    ilock(temp);
     temp->mode.asInt = mode;
-    cprintf("mode is: %d\n", temp->mode.asInt); 
     iupdate(temp); 
     iunlock(temp); 
     end_op();
     return 0;
   }
-  iunlock(temp);
-  end_op();
   return -1;
 }
 
@@ -693,16 +690,14 @@ chown(char * pathname, int owner){
   struct inode * temp;
   begin_op();
   temp = namei(pathname);
-  ilock(temp);
   if(temp){
+    ilock(temp);
     temp->uid = owner;
     iupdate(temp); 
     iunlock(temp); 
     end_op();
     return 0;
   }
-  iunlock(temp);
-  end_op();
   return -1;
 }
 //The chgrp() routine sets the user GID for the target specified by pathname.
@@ -712,16 +707,14 @@ chgrp(char * pathname, int group){
   struct inode * temp;
   begin_op();
   temp = namei(pathname);
-  ilock(temp);
   if(temp){
+    ilock(temp);
     temp->gid = group;
     iupdate(temp); 
     iunlock(temp); 
     end_op();
     return 0;
   }
-  iunlock(temp); 
-  end_op();
   return -1;
 }
 #endif

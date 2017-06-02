@@ -51,7 +51,7 @@ main(int argc, char *argv[])
     exit();
   }
 
-  printf(1, "String in decimal is %d\n", mode);
+  printf(1, "Mode for %s changed to %s.\n", pathname, ascii_mode);
 
   exit();
 }

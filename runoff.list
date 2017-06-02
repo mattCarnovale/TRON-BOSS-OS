@@ -91,3 +91,5 @@ setpriority.c
 chmod.c
 chown.c
 chgrp.c
+p5-test
+testsetuid.c
