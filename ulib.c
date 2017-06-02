@@ -107,3 +107,19 @@ memmove(void *vdst, void *vsrc, int n)
     *dst++ = *src++;
   return vdst;
 }
+
+int
+atoo(const char *s)
+{
+  int n, sign;
+
+  n = 0;
+  while (*s == ' ') s++;
+  sign = (*s == '-') ? -1 : 1;
+  if (*s == '+'  || *s == '-')
+    s++;
+  while('0' <= *s && *s <= '7')
+    n = n*8 + *s++ - '0';
+  return sign*n;
+}
+

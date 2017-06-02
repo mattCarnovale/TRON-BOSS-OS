@@ -10,7 +10,7 @@ main(int argc, char *argv[])
   int rc; 
 
   if (argc != 3) {
-    printf(2,"Error. chown needs 2 arguments: pathname & user id\n");
+    printf(2,"Error. chown needs 2 arguments: owner & target\n");
     exit();
   }
 

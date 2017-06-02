@@ -6,6 +6,7 @@
 #include "defs.h"
 #include "x86.h"
 #include "elf.h"
+#include "stat.h"
 
 int
 exec(char *path, char **argv)
@@ -25,6 +26,24 @@ exec(char *path, char **argv)
   }
   ilock(ip);
   pgdir = 0;
+
+#ifdef CS333_P5
+  struct stat * st = 0;
+
+  //Copy stat info from inode
+  stati(ip, st);
+  //Check against user permissions
+  if(st->uid == proc->uid){
+    if(!st->mode.flags.u_x)
+      return -1;
+  } else if(st->gid == proc->gid){       //Check against group permissions
+    if(!st->mode.flags.g_x)
+      return -1; 
+  } else {                               //Default / Other
+      if(!st->mode.flags.o_x)
+        return -1;
+  }
+#endif
 
   // Check ELF header
   if(readi(ip, (char*)&elf, 0, sizeof(elf)) < sizeof(elf))
@@ -90,6 +109,13 @@ exec(char *path, char **argv)
   oldpgdir = proc->pgdir;
   proc->pgdir = pgdir;
   proc->sz = sz;
+#ifdef CS333_P5
+  //If the permissions allow the invoking process to execute the file, 
+  //set the UID of the process executing the file to be the same as the 
+  //UID for the file.
+  if(st->mode.flags.setuid)
+    proc->uid = st -> uid;
+#endif
   proc->tf->eip = elf.entry;  // main
   proc->tf->esp = sp;
   switchuvm(proc);

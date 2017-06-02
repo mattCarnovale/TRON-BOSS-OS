@@ -445,8 +445,11 @@ sys_pipe(void)
 int 
 sys_chmod(char * pathname, int mode)
 {
+  if(argptr(0, (void*)&pathname, sizeof(*pathname)) < 0 || 
+     argint(1, &mode) < 0)
+     return -1; 
 
-  return 0;
+  return chmod(pathname, mode);
 }
 
 int 
