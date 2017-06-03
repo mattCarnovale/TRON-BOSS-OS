@@ -680,6 +680,7 @@ chmod(char * pathname, int mode){
     end_op();
     return 0;
   }
+  end_op();
   return -1;
 }
 
@@ -698,6 +699,7 @@ chown(char * pathname, int owner){
     end_op();
     return 0;
   }
+  end_op();
   return -1;
 }
 //The chgrp() routine sets the user GID for the target specified by pathname.
@@ -715,6 +717,7 @@ chgrp(char * pathname, int group){
     end_op();
     return 0;
   }
+  end_op();
   return -1;
 }
 #endif
