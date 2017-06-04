@@ -176,12 +176,6 @@ doChmodTest(char **cmd)
     check(chmod(cmd[0], perms[i]));
     check(stat(cmd[0], &st));
     testmode = st.mode.asInt;
-    if (mode == testmode) {
-      printf(2, "Error! Unable to test.\n");
-      printf(2, "\tfile mode (%d) == testmode (%d) for file (%s) in test %d\n",
-		     mode, testmode, cmd[0], i);
-      return NOPASS;
-    }
     if (mode == testmode) { 
       printf(2, "Error! chmod() failed to set permissions correctly. %s, %d\n",
 		      __FILE__, __LINE__);

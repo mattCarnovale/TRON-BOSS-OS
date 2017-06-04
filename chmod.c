@@ -47,7 +47,7 @@ main(int argc, char *argv[])
 
   rc = chmod(pathname, mode);
   if(rc < 0){
-    printf(2, "Error. chown failed to execute.\n");
+    printf(2, "Error. Chmod failed to execute.\n");
     exit();
   }
 
