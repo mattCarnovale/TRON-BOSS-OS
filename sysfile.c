@@ -448,8 +448,11 @@ sys_pipe(void)
 
 #ifdef CS333_P5
 int 
-sys_chmod(char * pathname, int mode)
+sys_chmod(void)
 {
+  char * pathname; 
+  int mode;
+
   if(argptr(0, (void*)&pathname, sizeof(*pathname)) < 0 || 
      argint(1, &mode) < 0)
      return -1; 
@@ -458,8 +461,10 @@ sys_chmod(char * pathname, int mode)
 }
 
 int 
-sys_chown(char * pathname, int owner) 
+sys_chown(void) 
 {
+  char * pathname; 
+  int owner;
   if(argptr(0, (void*)&pathname, sizeof(*pathname)) < 0 || 
      argint(1, &owner) < 0)
      return -1; 
@@ -468,8 +473,10 @@ sys_chown(char * pathname, int owner)
 }
 
 int
-sys_chgrp(char * pathname, int group)
+sys_chgrp(void)
 {
+  char * pathname; 
+  int group;
   if(argptr(0, (void*)&pathname, sizeof(*pathname)) < 0 || 
      argint(1, &group) < 0)
      return -1; 
