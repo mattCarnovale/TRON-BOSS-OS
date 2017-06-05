@@ -88,3 +88,9 @@ loopforever.c
 pstest.c
 undead.c
 setpriority.c
+chmod.c
+chown.c
+chgrp.c
+p5-test.h
+p5-test.c
+testsetuid.c

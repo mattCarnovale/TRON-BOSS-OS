@@ -183,9 +183,9 @@ userinit(void)
   p->tf->eip = 0;  // beginning of initcode.S
 
   //Set the uid field to the default for the initial process
-  initproc -> uid = DEFAULT_UID;
+  p -> uid = DEFAULT_UID;
   //Set the gid field to the default for the initial process
-  initproc -> gid = DEFAULT_GID;
+  p -> gid = DEFAULT_GID;
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");

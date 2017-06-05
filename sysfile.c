@@ -262,6 +262,11 @@ create(char *path, short type, short major, short minor)
   ip->major = major;
   ip->minor = minor;
   ip->nlink = 1;
+#ifdef CS333_P5
+  ip->uid = DEFAULT_UID;
+  ip->gid = DEFAULT_GID;
+  ip->mode.asInt = DEFAULT_MODE; 
+#endif
   iupdate(ip);
 
   if(type == T_DIR){  // Create . and .. entries.
@@ -440,3 +445,44 @@ sys_pipe(void)
   fd[1] = fd1;
   return 0;
 }
+
+#ifdef CS333_P5
+int 
+sys_chmod(void)
+{
+  char * pathname; 
+  int mode;
+
+  if(argptr(0, (void*)&pathname, sizeof(*pathname)) < 0 || 
+     argint(1, &mode) < 0)
+     return -1; 
+
+  return chmod(pathname, mode);
+}
+
+int 
+sys_chown(void) 
+{
+  char * pathname; 
+  int owner;
+  if(argptr(0, (void*)&pathname, sizeof(*pathname)) < 0 || 
+     argint(1, &owner) < 0)
+     return -1; 
+
+  return chown(pathname, owner);
+}
+
+int
+sys_chgrp(void)
+{
+  char * pathname; 
+  int group;
+  if(argptr(0, (void*)&pathname, sizeof(*pathname)) < 0 || 
+     argint(1, &group) < 0)
+     return -1; 
+
+  return chgrp(pathname, group);
+  return 0;
+}
+#endif
+

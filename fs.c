@@ -208,6 +208,11 @@ iupdate(struct inode *ip)
   dip->major = ip->major;
   dip->minor = ip->minor;
   dip->nlink = ip->nlink;
+#ifdef CS333_P5
+  dip->uid = ip -> uid;
+  dip->gid = ip -> gid;
+  dip->mode.asInt = ip -> mode.asInt; 
+#endif
   dip->size = ip->size;
   memmove(dip->addrs, ip->addrs, sizeof(ip->addrs));
   log_write(bp);
@@ -285,6 +290,11 @@ ilock(struct inode *ip)
     ip->major = dip->major;
     ip->minor = dip->minor;
     ip->nlink = dip->nlink;
+#ifdef CS333_P5
+    ip->uid = dip -> uid;
+    ip->gid = dip -> gid;
+    ip->mode.asInt = dip -> mode.asInt; 
+#endif
     ip->size = dip->size;
     memmove(ip->addrs, dip->addrs, sizeof(ip->addrs));
     brelse(bp);
@@ -426,6 +436,11 @@ stati(struct inode *ip, struct stat *st)
   st->ino = ip->inum;
   st->type = ip->type;
   st->nlink = ip->nlink;
+#ifdef CS333_P5
+  st->uid = ip -> uid;
+  st->gid = ip -> gid;
+  st->mode.asInt = ip -> mode.asInt; 
+#endif
   st->size = ip->size;
 }
 
@@ -649,3 +664,60 @@ nameiparent(char *path, char *name)
 {
   return namex(path, 1, name);
 }
+
+#ifdef CS333_P5
+int
+chmod(char * pathname, int mode){
+  
+  struct inode * temp;
+  begin_op();
+  temp = namei(pathname);
+  if(temp){
+    ilock(temp);
+    temp->mode.asInt = mode;
+    iupdate(temp); 
+    iunlock(temp); 
+    end_op();
+    return 0;
+  }
+  end_op();
+  return -1;
+}
+
+//The chown() routine sets the user UID for the target specified by pathname.
+int 
+chown(char * pathname, int owner){
+
+  struct inode * temp;
+  begin_op();
+  temp = namei(pathname);
+  if(temp){
+    ilock(temp);
+    temp->uid = owner;
+    iupdate(temp); 
+    iunlock(temp); 
+    end_op();
+    return 0;
+  }
+  end_op();
+  return -1;
+}
+//The chgrp() routine sets the user GID for the target specified by pathname.
+int 
+chgrp(char * pathname, int group){
+
+  struct inode * temp;
+  begin_op();
+  temp = namei(pathname);
+  if(temp){
+    ilock(temp);
+    temp->gid = group;
+    iupdate(temp); 
+    iunlock(temp); 
+    end_op();
+    return 0;
+  }
+  end_op();
+  return -1;
+}
+#endif
