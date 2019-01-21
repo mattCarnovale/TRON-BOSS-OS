@@ -14,6 +14,15 @@ As an introduction to operating systems, students were tasked with implementing 
 
 ## Usage
 
+### Prerequisites
+
+- i386-elf-gcc
+- i386-elf-gcc gdb (for debugging)
+- qumu
+
+\*\* On non-x86 or non-ELF machines a cross-compiler gcc suite capable of producing
+x86 ELF binaries must be installed to use "make" commands. Further, the `TOOLPREFIX` flag will have to be adjusted to match that of your environment.
+
 ### Installation
 
 Clone the repository to your local machine with: <br />
@@ -24,6 +33,16 @@ If using SSH: <br />
 
 ### Building & Running the Kernel
 
-This project utilizes [QEMU](https://www.qemu.org/), a very powerful full-system emulator. For further details on the commands and flags availabile, see the [Makefile](https://github.com/mattCarnovale/TRON-BOSS-OS/blob/master/Makefile) utilized by this project.
+Build:
+`make`
+
+Remove binaries generated from build:
+`make clean`
+
+Default boot:
+`make qemu-nox`
+
+Debug boot:
+`make qemu-nox-gdb`
 
 ## Deliverables
